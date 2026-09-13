@@ -1,0 +1,308 @@
+@font-face {
+    font-family: 'MulmaruMono';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2601-4@1.1/MulmaruMono.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+
+body {
+  margin: 0;
+  background-color: #000000;
+  color: #00ffff;
+  font-family: 'MulmaruMono', monospace;
+  overflow: hidden;
+  text-shadow: 0 0 2px rgba(0, 255, 255, 0.4);
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+  gap: 16px;
+}
+
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.box-border {
+  border: 2px solid #00ffff;
+  background-color: #0a0a0a;
+  box-sizing: border-box;
+  position: relative;
+  box-shadow: inset 0 0 8px rgba(0, 255, 255, 0.15), 0 0 8px rgba(0, 255, 255, 0.2);
+}
+
+.box-border::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 6px; height: 6px;
+  background-color: #00ffff;
+  box-shadow: 0 0 6px #00ffff;
+}
+
+.box-inner {
+  border: 1px solid #00ffff;
+  box-sizing: border-box;
+  background-color: #050505;
+}
+
+.sidebar {
+  width: 260px;
+  padding-right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: none;
+  border-right: 2px solid #00ffff;
+  background-color: #0a0a0a;
+  box-sizing: border-box;
+  box-shadow: 4px 0 10px rgba(0, 255, 255, 0.1);
+}
+
+.id-card {
+  padding: 12px;
+}
+
+.id-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.id-card-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-img-box {
+  width: 70px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-img-icon {
+  width: 100%;
+  height: 100%;
+  background-color: #00ffff;
+  box-shadow: 0 0 6px #00ffff;
+  -webkit-mask-image: url('./assets/user.png');
+  mask-image: url('./assets/user.png');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.id-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.folder-box {
+  padding: 12px;
+  flex: 1;
+}
+
+.menu-item {
+  cursor: pointer;
+  margin-bottom: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  color: #ffffff;
+  text-shadow: 0 0 8px #00ffff, 0 0 15px #00ffff;
+}
+
+.menu-item-sub {
+  padding-left: 16px;
+}
+
+.calendar-main, .compare-container {
+  padding: 16px;
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #00ffff;
+  font-size: 16px;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.6);
+}
+
+.cyber-button {
+  border: 1px solid #00ffff;
+  background: transparent;
+  color: #00ffff;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: 'MulmaruMono', monospace;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 4px rgba(0, 255, 255, 0.2);
+}
+
+.cyber-button:hover {
+  background-color: #00ffff;
+  color: #000000;
+  box-shadow: 0 0 12px #00ffff, 0 0 25px #00ffff;
+}
+
+.calendar-table {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #00ffff;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  flex: 1;
+}
+
+.calendar-cell {
+  border: 1px solid #00ffff;
+  margin: -1px -1px 0 0;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  box-sizing: border-box;
+  background-color: #0a0a0a;
+  transition: background-color 0.15s ease;
+}
+
+.calendar-cell:hover, .compare-day-cell:hover {
+  background-color: #002b2b;
+  box-shadow: inset 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+.calendar-cell.selected {
+  background-color: #004d4d;
+  box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.6);
+}
+
+.compare-calendar-box {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex: 1;
+}
+
+.compare-day-cell {
+  border: 1px solid #00ffff;
+  margin: -1px -1px 0 0;
+  padding: 6px;
+  box-sizing: border-box;
+  background-color: #0a0a0a;
+  font-size: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.schedule-bottom-box {
+  flex: 1.2;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-box {
+  padding: 24px;
+  width: 420px;
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.4), inset 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.cyber-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  padding: 6px;
+  box-sizing: border-box;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  font-family: 'MulmaruMono', monospace;
+  box-shadow: inset 0 0 4px rgba(0, 255, 255, 0.2);
+}
+
+.cyber-input:focus {
+  outline: none;
+  box-shadow: 0 0 8px #00ffff, inset 0 0 6px rgba(0, 255, 255, 0.4);
+  background-color: rgba(0, 255, 255, 0.05);
+}
+
+.cyber-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-color: #00ffff;
+  box-shadow: 0 0 4px #00ffff;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.icon-folder {
+  -webkit-mask-image: url('./assets/folder.png');
+  mask-image: url('./assets/folder.png');
+}
+
+.icon-document {
+  -webkit-mask-image: url('./assets/documents.png');
+  mask-image: url('./assets/documents.png');
+}
+
+.icon-gear {
+  -webkit-mask-image: url('./assets/gear.png');
+  mask-image: url('./assets/gear.png');
+}
