@@ -1,0 +1,66 @@
+name: hour
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  mariadb:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?.env에 DB_ROOT_PASSWORD를 넣어 주세요}
+      MARIADB_DATABASE: hour
+      MARIADB_USER: hour
+      MARIADB_PASSWORD: ${DB_PASSWORD:?.env에 DB_PASSWORD를 넣어 주세요}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=128M
+      - --max-connections=50
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging: *default-logging
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:?.env에 MAIL_USERNAME을 넣어 주세요}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:?.env에 MAIL_PASSWORD를 넣어 주세요}
+      JAVA_OPTS: -Xms128m -Xmx384m -XX:+UseSerialGC
+      TZ: Asia/Seoul
+    volumes:
+      - uploads:/app/uploads
+    logging: *default-logging
+
+  nginx:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    logging: *default-logging
+
+volumes:
+  db-data:
+  uploads:

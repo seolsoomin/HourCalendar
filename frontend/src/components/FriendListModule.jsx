@@ -1,26 +1,45 @@
 import React from 'react';
 
-export default function FriendListModule() {
-  const cards = Array.from({ length: 6 }, (_, i) => i + 1);
-
+export default function FriendListModule({ friends, loading, onSelectFriend, onAddFriend }) {
   return (
-    <div className="box-border" style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ fontSize: '16px', borderBottom: '1px solid #00ffff', paddingBottom: '8px' }}>List</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', flex: 1, overflowY: 'auto' }}>
-        {cards.map((c) => (
-          <div key={c} className="box-border" style={{ padding: '12px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div className="box-inner profile-img-box" style={{ width: '70px', height: '90px' }}>
-              <div className="profile-img-icon"></div>
+    <section className="box-border panel friend-panel">
+      <div className="panel-title-row panel-title-row--actions">
+        <span>친구 목록</span>
+        <button type="button" className="cyber-button btn-sm" onClick={onAddFriend}>
+          친구 추가
+        </button>
+      </div>
+
+      {loading && <p className="empty-text">불러오는 중...</p>}
+      {!loading && friends.length === 0 && (
+        <p className="empty-text">아직 친구가 없습니다. 친구 추가 버튼으로 친구의 아이디를 입력해 보세요.</p>
+      )}
+
+      <div className="friend-grid">
+        {friends.map((f) => (
+          <button
+            type="button"
+            key={f.userId}
+            className="box-border friend-card"
+            onClick={() => onSelectFriend(f)}
+            aria-label={`${f.nickname}의 일정 보기`}
+          >
+            <div className="box-inner profile-img-box profile-img-box--lg">
+              {f.profileImage ? (
+                <img className="profile-img" src={f.profileImage} alt="" />
+              ) : (
+                <div className="profile-img-icon" />
+              )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px' }}>
-              <div>[ NICKNAME ]</div>
-              <div>[ ID ]</div>
-              <div>[ AGE ]</div>
-              <div>[ BIRTH ]</div>
+            <div className="friend-info">
+              <div>{f.nickname}</div>
+              <div>{f.loginId}</div>
+              <div>{f.age != null ? `${f.age}세` : '[ 나이 ]'}</div>
+              <div>{f.birth || '[ 생일 ]'}</div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

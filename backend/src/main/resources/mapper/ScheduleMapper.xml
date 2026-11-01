@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hour.schedule.ScheduleMapper">
+
+    <sql id="columns">
+        s.schedule_id, s.user_id, s.room_id, s.title, s.start_time, s.end_time,
+        s.memo, s.is_secret, s.show_in_compare, s.status, s.created_at
+    </sql>
+
+    <select id="findById" resultType="com.hour.schedule.Schedule">
+        SELECT <include refid="columns"/>
+        FROM schedule s
+        WHERE s.schedule_id = #{scheduleId}
+    </select>
+
+    <select id="findForUserInRange" resultType="com.hour.schedule.Schedule">
+        SELECT <include refid="columns"/>
+        FROM schedule s
+        WHERE s.status &lt;&gt; 'CANCELED'
+          AND s.start_time &lt; #{to}
+          AND s.end_time &gt; #{from}
+          AND (
+                s.user_id = #{userId}
+                OR EXISTS (SELECT 1 FROM schedule_member m
+                           WHERE m.schedule_id = s.schedule_id
+                             AND m.user_id = #{userId}
+                             AND m.status = 'ACCEPTED')
+              )
+        ORDER BY s.start_time, s.schedule_id
+    </select>
+
+    <select id="findOverlaps" resultType="com.hour.schedule.Schedule">
+        SELECT <include refid="columns"/>
+        FROM schedule s
+        WHERE s.status &lt;&gt; 'CANCELED'
+          AND s.start_time &lt; #{end}
+          AND s.end_time &gt; #{start}
+          <if test="excludeId != null">
+          AND s.schedule_id &lt;&gt; #{excludeId}
+          </if>
+          AND (
+                s.user_id = #{userId}
+                OR EXISTS (SELECT 1 FROM schedule_member m
+                           WHERE m.schedule_id = s.schedule_id
+                             AND m.user_id = #{userId}
+                             AND m.status = 'ACCEPTED')
+              )
+        ORDER BY s.start_time
+    </select>
+
+    <select id="findBusyForUsers" resultType="com.hour.schedule.BusySlot">
+        SELECT u.user_id, s.start_time, s.end_time
+        FROM users u
+        JOIN schedule s
+          ON s.status &lt;&gt; 'CANCELED'
+         AND s.show_in_compare = 1
+         AND s.start_time &lt; #{to}
+         AND s.end_time &gt; #{from}
+         AND (
+               s.user_id = u.user_id
+               OR EXISTS (SELECT 1 FROM schedule_member m
+                          WHERE m.schedule_id = s.schedule_id
+                            AND m.user_id = u.user_id
+                            AND m.status = 'ACCEPTED')
+             )
+        WHERE u.user_id IN
+        <foreach collection="userIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY s.start_time
+    </select>
+
+    <select id="findUsersWithOverlap" resultType="com.hour.user.User">
+        SELECT DISTINCT u.user_id, u.nickname
+        FROM users u
+        JOIN schedule s
+          ON s.status &lt;&gt; 'CANCELED'
+         AND s.show_in_compare = 1
+         AND s.start_time &lt; #{end}
+         AND s.end_time &gt; #{start}
+         AND (
+               s.user_id = u.user_id
+               OR EXISTS (SELECT 1 FROM schedule_member m
+                          WHERE m.schedule_id = s.schedule_id
+                            AND m.user_id = u.user_id
+                            AND m.status = 'ACCEPTED')
+             )
+        WHERE u.user_id IN
+        <foreach collection="userIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="scheduleId" keyColumn="schedule_id">
+        INSERT INTO schedule (user_id, room_id, title, start_time, end_time, memo, is_secret, show_in_compare, status)
+        VALUES (#{userId}, #{roomId,jdbcType=BIGINT}, #{title}, #{startTime}, #{endTime},
+                #{memo,jdbcType=VARCHAR}, #{isSecret}, #{showInCompare}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE schedule
+        SET title = #{title},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            memo = #{memo,jdbcType=VARCHAR},
+            is_secret = #{isSecret},
+            show_in_compare = #{showInCompare}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+    <update id="updateTime">
+        UPDATE schedule
+        SET start_time = #{start},
+            end_time = #{end}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM schedule WHERE schedule_id = #{scheduleId}
+    </delete>
+
+    <update id="updateStatus">
+        UPDATE schedule
+        SET status = #{status}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+    <update id="confirmIfAllAccepted">
+        UPDATE schedule
+        SET status = 'CONFIRMED'
+        WHERE schedule_id = #{scheduleId}
+          AND status = 'PENDING'
+          AND NOT EXISTS (SELECT 1 FROM schedule_member m
+                          WHERE m.schedule_id = #{scheduleId}
+                            AND m.status &lt;&gt; 'ACCEPTED')
+    </update>
+
+    <insert id="insertMember">
+        INSERT INTO schedule_member (schedule_id, user_id)
+        VALUES (#{scheduleId}, #{userId})
+    </insert>
+
+    <update id="respond">
+        UPDATE schedule_member
+        SET status = #{status},
+            responded_at = CURRENT_TIMESTAMP
+        WHERE schedule_id = #{scheduleId}
+          AND user_id = #{userId}
+          AND status = 'PENDING'
+    </update>
+
+    <select id="findMemberUserIds" resultType="long">
+        SELECT user_id FROM schedule_member WHERE schedule_id = #{scheduleId}
+    </select>
+
+    <select id="findPendingInRoom" resultType="com.hour.schedule.Schedule">
+        SELECT <include refid="columns"/>
+        FROM schedule s
+        WHERE s.room_id = #{roomId}
+          AND s.status = 'PENDING'
+    </select>
+
+    <select id="findMyPendingInvitesInRoom" resultType="long">
+        SELECT s.schedule_id
+        FROM schedule_member m
+        JOIN schedule s ON s.schedule_id = m.schedule_id
+        WHERE s.room_id = #{roomId}
+          AND s.status = 'PENDING'
+          AND m.user_id = #{userId}
+          AND m.status = 'PENDING'
+    </select>
+
+    <select id="findPendingInvitations" resultType="com.hour.schedule.Invitation">
+        SELECT s.schedule_id, s.title, s.start_time, s.end_time, s.memo,
+               s.room_id, r.room_title,
+               s.user_id AS owner_id, u.nickname AS owner_nickname
+        FROM schedule_member m
+        JOIN schedule s ON s.schedule_id = m.schedule_id
+        JOIN users u ON u.user_id = s.user_id
+        LEFT JOIN room r ON r.room_id = s.room_id
+        WHERE m.user_id = #{userId}
+          AND m.status = 'PENDING'
+          AND s.status = 'PENDING'
+        ORDER BY s.start_time
+    </select>
+</mapper>

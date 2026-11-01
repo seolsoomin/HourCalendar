@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hour.room.RoomMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="roomId" keyColumn="room_id">
+        INSERT INTO room (room_code, host_id, room_title)
+        VALUES (#{roomCode}, #{hostId}, #{roomTitle})
+    </insert>
+
+    <select id="findById" resultType="com.hour.room.Room">
+        SELECT room_id, room_code, host_id, room_title, created_at, deleted_at
+        FROM room
+        WHERE room_id = #{roomId}
+    </select>
+
+    <select id="findByCode" resultType="com.hour.room.Room">
+        SELECT room_id, room_code, host_id, room_title, created_at, deleted_at
+        FROM room
+        WHERE room_code = #{roomCode}
+    </select>
+
+    <update id="markDeleted">
+        UPDATE room SET deleted_at = CURRENT_TIMESTAMP WHERE room_id = #{roomId}
+    </update>
+
+    <delete id="deleteParticipant">
+        DELETE FROM room_participant WHERE room_id = #{roomId} AND user_id = #{userId}
+    </delete>
+
+    <delete id="deleteAllParticipants">
+        DELETE FROM room_participant WHERE room_id = #{roomId}
+    </delete>
+
+    <insert id="insertParticipant">
+        INSERT INTO room_participant (room_id, user_id)
+        VALUES (#{roomId}, #{userId})
+    </insert>
+
+    <select id="countParticipant" resultType="int">
+        SELECT COUNT(*)
+        FROM room_participant
+        WHERE room_id = #{roomId}
+          AND user_id = #{userId}
+    </select>
+
+    <select id="countParticipantsAmong" resultType="int">
+        SELECT COUNT(*)
+        FROM room_participant
+        WHERE room_id = #{roomId}
+          AND user_id IN
+          <foreach collection="userIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <select id="findMyRooms" resultType="com.hour.room.Room">
+        SELECT r.room_id, r.room_code, r.host_id, r.room_title, r.created_at,
+               (SELECT COUNT(*)
+                FROM room_message m
+                WHERE m.room_id = r.room_id
+                  AND m.message_id &gt; COALESCE(p.last_read_message_id, 0)
+                  AND (m.user_id IS NULL OR m.user_id &lt;&gt; #{userId})) AS unread_count
+        FROM room_participant p
+        JOIN room r ON r.room_id = p.room_id
+        WHERE p.user_id = #{userId}
+          AND r.deleted_at IS NULL
+        ORDER BY p.joined_at, r.room_id
+    </select>
+
+    <select id="findParticipants" resultType="com.hour.user.User">
+        SELECT u.user_id, u.login_id, u.nickname, u.profile_image
+        FROM room_participant p
+        JOIN users u ON u.user_id = p.user_id
+        WHERE p.room_id = #{roomId}
+        ORDER BY p.joined_at, u.user_id
+    </select>
+
+    <select id="findParticipantSchedules" resultType="com.hour.room.RoomScheduleRow">
+        SELECT s.schedule_id, s.user_id AS owner_id, u.user_id AS participant_id, u.nickname,
+               s.title, s.start_time, s.end_time, s.is_secret, s.status
+        FROM room_participant p
+        JOIN users u ON u.user_id = p.user_id
+        JOIN schedule s
+          ON s.status &lt;&gt; 'CANCELED'
+         AND s.show_in_compare = 1
+         AND s.start_time &lt; #{to}
+         AND s.end_time &gt; #{from}
+         AND (
+               s.user_id = p.user_id
+               OR EXISTS (SELECT 1 FROM schedule_member m
+                          WHERE m.schedule_id = s.schedule_id
+                            AND m.user_id = p.user_id
+                            AND m.status = 'ACCEPTED')
+             )
+        WHERE p.room_id = #{roomId}
+        ORDER BY s.start_time, s.schedule_id, p.joined_at
+    </select>
+
+    <select id="findParticipantIds" resultType="long">
+        SELECT user_id FROM room_participant WHERE room_id = #{roomId}
+    </select>
+</mapper>

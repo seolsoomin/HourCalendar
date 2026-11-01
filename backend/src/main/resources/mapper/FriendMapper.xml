@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hour.friend.FriendMapper">
+
+    <select id="findBetween" resultType="com.hour.friend.Friendship">
+        SELECT friendship_id, user_id, friend_id, status, created_at, updated_at
+        FROM friendship
+        WHERE (user_id = #{a} AND friend_id = #{b})
+           OR (user_id = #{b} AND friend_id = #{a})
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="friendshipId" keyColumn="friendship_id">
+        INSERT INTO friendship (user_id, friend_id, status)
+        VALUES (#{userId}, #{friendId}, #{status})
+    </insert>
+
+    <update id="reRequest">
+        UPDATE friendship
+        SET user_id = #{userId},
+            friend_id = #{friendId},
+            status = 'REQUESTED'
+        WHERE friendship_id = #{friendshipId}
+    </update>
+
+    <select id="findReceived" resultType="com.hour.friend.ReceivedRequest">
+        SELECT f.friendship_id, u.user_id, u.login_id, u.nickname, u.profile_image, f.created_at
+        FROM friendship f
+        JOIN users u ON u.user_id = f.user_id
+        WHERE f.friend_id = #{userId}
+          AND f.status = 'REQUESTED'
+        ORDER BY f.created_at DESC
+    </select>
+
+    <update id="respond">
+        UPDATE friendship
+        SET status = #{status}
+        WHERE friendship_id = #{friendshipId}
+          AND friend_id = #{receiverId}
+          AND status = 'REQUESTED'
+    </update>
+
+    <select id="findFriends" resultType="com.hour.user.User">
+        SELECT u.user_id, u.login_id, u.nickname, u.birth_date, u.profile_image
+        FROM friendship f
+        JOIN users u
+          ON u.user_id = CASE WHEN f.user_id = #{userId} THEN f.friend_id ELSE f.user_id END
+        WHERE (f.user_id = #{userId} OR f.friend_id = #{userId})
+          AND f.status = 'ACCEPTED'
+        ORDER BY u.nickname
+    </select>
+
+    <select id="countAccepted" resultType="int">
+        SELECT COUNT(*)
+        FROM friendship
+        WHERE ((user_id = #{a} AND friend_id = #{b})
+            OR (user_id = #{b} AND friend_id = #{a}))
+          AND status = 'ACCEPTED'
+    </select>
+
+    <update id="markDeleted">
+        UPDATE friendship
+        SET status = 'DELETED'
+        WHERE ((user_id = #{a} AND friend_id = #{b})
+            OR (user_id = #{b} AND friend_id = #{a}))
+          AND status = 'ACCEPTED'
+    </update>
+
+    <delete id="deleteStale">
+        DELETE FROM friendship
+        WHERE status IN ('REJECTED', 'DELETED')
+          AND updated_at &lt; #{before}
+    </delete>
+</mapper>
