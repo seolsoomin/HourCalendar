@@ -82,6 +82,9 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((m) => m.setAttribute('content', theme === 'dark' ? '#121212' : '#FAFAFA'));
     try {
       localStorage.setItem(THEME_KEY, theme);
     } catch {
