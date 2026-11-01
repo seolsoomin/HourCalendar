@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hour.notification.NotificationMapper">
+
+    <insert id="insert">
+        INSERT INTO notification (user_id, noti_type, ref_id, message)
+        VALUES (#{userId}, #{type}, #{refId,jdbcType=BIGINT}, #{message})
+    </insert>
+
+    <select id="findUnread" resultType="com.hour.notification.Notification">
+        SELECT notification_id, user_id, noti_type, ref_id, message, is_read, created_at
+        FROM notification
+        WHERE user_id = #{userId}
+          AND is_read = 0
+        ORDER BY created_at DESC, notification_id DESC
+    </select>
+
+    <update id="markRead">
+        UPDATE notification
+        SET is_read = 1
+        WHERE notification_id = #{notificationId}
+          AND user_id = #{userId}
+    </update>
+
+    <update id="markAllRead">
+        UPDATE notification
+        SET is_read = 1
+        WHERE user_id = #{userId}
+          AND is_read = 0
+    </update>
+</mapper>
