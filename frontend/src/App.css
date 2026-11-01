@@ -34,6 +34,7 @@
   --radius-md: 8px;
   --radius-lg: 10px;
   --ease: 0.2s ease;
+  color-scheme: only light;
 }
 
 [data-theme='dark'] {
@@ -2869,5 +2870,22 @@ button.planner-item:disabled {
 @media (hover: none) {
   .room-settings-button {
     opacity: 1;
+  }
+}
+
+@media (display-mode: window-controls-overlay) {
+  .app-container {
+    padding-top: calc(env(titlebar-area-height, 33px) + 8px);
+  }
+
+  .app-container::before {
+    content: '';
+    position: fixed;
+    top: env(titlebar-area-y, 0);
+    left: env(titlebar-area-x, 0);
+    width: env(titlebar-area-width, 100%);
+    height: env(titlebar-area-height, 33px);
+    app-region: drag;
+    -webkit-app-region: drag;
   }
 }

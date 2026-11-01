@@ -1,7 +1,7 @@
 {
   "id": "/",
   "short_name": "HOUR",
-  "name": "HOUR - 일정 관리",
+  "name": "HOUR",
   "description": "친구와 함께 일정을 관리하고 맞추는 캘린더",
   "lang": "ko",
   "icons": [
@@ -12,6 +12,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay"],
   "theme_color": "#FAFAFA",
   "background_color": "#FAFAFA"
 }
