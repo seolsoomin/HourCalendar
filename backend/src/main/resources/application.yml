@@ -11,6 +11,9 @@ spring:
     multipart:
       max-file-size: 5MB
       max-request-size: 6MB
+  session:
+    jdbc:
+      initialize-schema: never
   mail:
     properties:
       mail.smtp.auth: true
@@ -34,6 +37,7 @@ server:
     session:
       timeout: 7d
       cookie:
+        name: JSESSIONID
         http-only: true
         same-site: lax
         max-age: 7d

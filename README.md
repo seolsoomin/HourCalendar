@@ -62,6 +62,7 @@
 3. 인증 정보 보호
    - 비밀번호와 이메일 인증번호는 BCrypt 해시로 저장
    - 로그인 시 세션 ID 재발급(세션 고정 공격 방지), `HttpOnly` / `SameSite=Lax` 쿠키
+   - 세션은 DB에 저장해 서버를 다시 시작하거나 업데이트해도 로그인이 유지된다 (7일)
    - 인증번호 10분 만료, 재전송 60초 제한, 입력 5회 제한
 4. 모든 API에서 본인 데이터 / 친구 관계 / 방 참여 여부를 확인한 뒤에만 응답
 5. 채팅 연결이 끊기면 5초 간격 폴링으로 자동 전환하고, 재연결을 시도한다.
@@ -329,7 +330,7 @@
 | Frontend | React, CSS                           |
 | Backend  | Spring Boot, Spring WebSocket(STOMP) |
 | Database | MariaDB                              |
-| 인증       | 아이디/비밀번호 + HTTP 세션, BCrypt           |
+| 인증       | 아이디/비밀번호 + HTTP 세션(Spring Session JDBC로 DB에 저장), BCrypt |
 | 메일       | Spring Mail + Gmail SMTP             |
 
 ### 2-2. 주 기능
@@ -372,6 +373,7 @@
 | `notification`       | 알림                    |
 | `todo`               | 오늘의 일정표의 할 일          |
 | `room_message`       | 방 채팅 메시지 (일반·시스템·초대)  |
+| `SPRING_SESSION`, `SPRING_SESSION_ATTRIBUTES` | 로그인 세션 (Spring Session JDBC가 관리) |
 
 #### users — 회원
 
@@ -538,10 +540,11 @@
 
 ```
 backend/
-├── build.gradle                         의존성 (Spring Boot 4, MyBatis, MariaDB, Lombok)
+├── build.gradle                         의존성 (Spring Boot 4, Spring Session JDBC, MyBatis, MariaDB, Lombok)
 ├── db/
 │   ├── schema.sql                       전체 테이블 생성 DDL
-│   └── migration-chat.sql               기존 DB에 채팅 기능을 추가하는 마이그레이션
+│   ├── migration-chat.sql               기존 DB에 채팅 기능을 추가하는 마이그레이션
+│   └── migration-session.sql            기존 DB에 로그인 세션 테이블을 추가하는 마이그레이션
 └── src/
     ├── main/
     │   ├── java/com/hour/
@@ -914,3 +917,9 @@ POST /api/schedules
 - 모바일 기기가 다크 모드일 때 앱에서 라이트 테마로 바꿀 수 없던 문제 수정 (테마에 맞춰 `theme-color` 메타 태그 갱신, PWA 이름을 `HOUR`로 변경)
 - 프론트엔드 Docker 빌드에서 `npm ci` 대신 `npm install`을 사용하도록 변경
 - README 정리 (향후 계획 섹션 삭제)
+
+### v1.0.2 — 2026-11-09
+
+- 서버를 업데이트(백엔드 재시작)할 때마다 로그인이 풀리던 문제 수정
+  - 서버 메모리에만 있던 로그인 세션을 Spring Session JDBC로 MariaDB에 저장 (`SPRING_SESSION` 테이블 추가)
+  - 기존 DB는 `backend/db/migration-session.sql`로 테이블을 추가한다
